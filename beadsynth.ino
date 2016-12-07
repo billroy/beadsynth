@@ -1,10 +1,11 @@
 //  BEAD Synthesizer 0.0
 //
+//  Copyright 2016 by Bill Roy.  License: MIT - see LICENSE file
+//
 //  This is a simple sound-effect synthesizer based on the excellent Mozzi.
 //  It generates sounds by sweeping from a beginning to an end frequency
 //  and uses an EAD envelope with attack and decay parameters to shape the gain
 //
-
 #include <MozziGuts.h>
 #include <Oscil.h>
 #include <EventDelay.h>
@@ -14,6 +15,7 @@
 #include <EEPROM.h>
 
 #define CONTROL_RATE 64
+#define TRIGGER_PIN 8
 
 Oscil <8192, AUDIO_RATE> aOscil(SIN8192_DATA);;
 EventDelay noteDelay;
@@ -21,7 +23,7 @@ Ead envelope(CONTROL_RATE);
 Line <long> aSlide;
 int gain;
 
-// user parameters
+// default parameters
 int begin_freq      = 110;
 int end_freq        = 880;
 unsigned int attack = 50;
@@ -140,6 +142,12 @@ void loop() {
 
     // feed serial input to the command handler
     while (Serial.available() && !playing && !start_playing) handleCommand(Serial.read());
+
+    // look for a trigger input on the watch pin
+    if (digitalRead(TRIGGER_PIN) && !playing && !start_playing) {
+        repeat = 1;
+        start_playing = 1;
+    }
 }
 
 // serial input handling for BEAD synth
