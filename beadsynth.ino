@@ -35,6 +35,11 @@ byte start_playing = 0;
 byte playing = 0;
 unsigned int repeat = 1;        // gratuitous beep at startup; set to 0 for silent start
 
+// serial input handling
+unsigned int accumulator;
+unsigned int arg;
+byte accumulator_touched;
+
 void showParams() {
     Serial.println();
     Serial.print("begin:"); Serial.println(begin_freq);
@@ -42,6 +47,7 @@ void showParams() {
     Serial.print("attack:"); Serial.println(attack);
     Serial.print("decay:"); Serial.println(decay);
     Serial.print("quiet:"); Serial.println(quiet);
+    Serial.print("arg:"); Serial.println(arg);
 }
 
 /*
@@ -89,13 +95,27 @@ void dumpEeprom() {
     for (slot=0; slot<32; slot++) {
         Serial.print(slot);
         Serial.print(":");
-        for (offset=0; offset < 16; offset++) {
+        int value;
+        eg(slot * 16, value); Serial.print(" "); Serial.print(value);
+        eg(slot * 16 + 2, value); Serial.print(" "); Serial.print(value);
+        eg(slot * 16 + 4, value); Serial.print(" "); Serial.print(value);
+        eg(slot * 16 + 6, value); Serial.print(" "); Serial.print(value);
+        eg(slot * 16 + 8, value); Serial.print(" "); Serial.print(value);
+        for (offset=10; offset < 16; offset++) {
             Serial.print(" ");
             Serial.print(EEPROM.read(slot * 16 + offset), HEX);
         }
         Serial.println();
     }
     Serial.println();
+}
+
+int getAnalogInput(int pin) {
+    int value = mozziAnalogRead(pin);
+
+    // first reading is zero.  reread here if we see a zero to skip it.
+    if (value) return value;
+    return mozziAnalogRead(pin);
 }
 
 void setup() {
@@ -150,10 +170,6 @@ void loop() {
     }
 }
 
-// serial input handling for BEAD synth
-unsigned long accumulator;
-unsigned long arg;
-byte accumulator_touched;
 
 void handleCommand(char cmd) {
     Serial.print(cmd);  // echo
@@ -177,6 +193,7 @@ void handleCommand(char cmd) {
         case 'q': quiet      = arg; break;
         case 'r': repeat     = arg; start_playing = 1; break;
         case 'p': repeat     = 1;   start_playing = 1; break;
+        case 'i': arg = getAnalogInput(arg); break;
         case '>': writeSlot(arg);   break;
         case '<': readSlot(arg);    break;
         case '=': showParams();     break;
