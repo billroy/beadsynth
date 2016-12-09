@@ -6,7 +6,8 @@ This is a simple 5-parameter sound synthesizer based on the excellent Mozzi
 sound synthesis library for Arduino.  It can generate a wide variety of
 beeps, bloops, dings, and squawks.
 
-You control it using commands over the serial port.
+You configure the synth using commands over the serial port, and trigger it
+using digital inputs or the serial port.
 
 More on Mozzi here: https://github.com/sensorium/Mozzi
 
@@ -46,11 +47,20 @@ The sound is output on pin 9.  Consult Mozzi for guidance on how to connect
 your headphone/speaker/amplifier, moving the pin, and on filtering the audio
 to remove synthesis artifacts.
 
-A high input on Pin 8 triggers the synth.  It has the same effect as sending
-the 'p' command over the serial connection.  Ground pin 8 if you are seeing
-spurious triggers, or hold it high for continuous play.
+A low input on any of the pins defined in the trigger_pins array triggers the
+synth.  By default, trigger_pins is defined to use all the remaining digital
+pins on a standard arduino:
+
+    uint8_t trigger_pins[] = {2,3,4,5, 6,7,8,10, 11,12};
+
+So a LOW on pin 2 will trigger the sound in slot 0, a low on 3 the sound in slot
+1, and so on.
 
 While a sound is playing, pin 13 is high; otherwise it is low.
+
+The 'i' command reads a specified analog input and passes the value along to the
+next command; this can be useful for connecting an external sensor to control
+one or more parameters.
 
 
 ### Command interpreter
@@ -115,6 +125,12 @@ the volume of the sound.
 #### q: quiet time between repeats
 
     1000q5r         // set a 1 second silence and play 5 times
+
+#### i: read analog input
+
+You can read an analog input and use it to control a parameter.
+
+    2ibp            // read analog pin 2 and set its value as the begin freq
 
 #### =: see parameters
 

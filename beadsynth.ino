@@ -15,7 +15,10 @@
 #include <EEPROM.h>
 
 #define CONTROL_RATE 64
-#define TRIGGER_PIN 8
+
+// pins to scan for sound triggers
+// grounding a pin plays the slot identified by its index
+uint8_t trigger_pins[] = {2,3,4,5, 6,7,8,10, 11,12};
 
 Oscil <8192, AUDIO_RATE> aOscil(SIN8192_DATA);;
 EventDelay noteDelay;
@@ -122,6 +125,10 @@ void setup() {
     Serial.begin(115200);
     Serial.println("beadsynth here! v0.0");
     startMozzi(CONTROL_RATE);
+
+    // turn on pullup resistors on trigger pins
+    int i;
+    for (i=0; i<sizeof(trigger_pins); i++) digitalWrite(trigger_pins[i], HIGH);
 }
 
 void updateControl() {
@@ -161,12 +168,18 @@ void loop() {
     audioHook();
 
     // feed serial input to the command handler
-    while (Serial.available() && !playing && !start_playing) handleCommand(Serial.read());
+    while (!playing && !start_playing && Serial.available()) handleCommand(Serial.read());
 
-    // look for a trigger input on the watch pin
-    if (digitalRead(TRIGGER_PIN) && !playing && !start_playing) {
-        repeat = 1;
-        start_playing = 1;
+    // look for a trigger input on the watch pins
+    int i;
+    for (i=0; i<sizeof(trigger_pins); i++) {
+        if (playing || start_playing) break;
+        if (!digitalRead(trigger_pins[i])) {
+            readSlot(i);
+            repeat = 1;
+            start_playing = 1;
+            break;
+        }
     }
 }
 
