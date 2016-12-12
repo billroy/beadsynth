@@ -40,7 +40,7 @@ unsigned int repeat = 1;        // gratuitous beep at startup; set to 0 for sile
 
 // serial input handling
 unsigned int accumulator;
-unsigned int arg;
+unsigned int arg, last_arg;
 byte accumulator_touched;
 
 void showParams() {
@@ -51,6 +51,7 @@ void showParams() {
     Serial.print("decay:"); Serial.println(decay);
     Serial.print("quiet:"); Serial.println(quiet);
     Serial.print("arg:"); Serial.println(arg);
+    Serial.print("last_arg:"); Serial.println(last_arg);
 }
 
 /*
@@ -195,7 +196,10 @@ void handleCommand(char cmd) {
     }
 
     // not a digit - end accumulation and save arg
-    if (accumulator_touched) arg = accumulator;
+    if (accumulator_touched) {
+        last_arg = arg;
+        arg = accumulator;
+    }
     accumulator_touched = 0;
     accumulator = 0;
     switch (cmd) {
@@ -210,7 +214,14 @@ void handleCommand(char cmd) {
         case '>': writeSlot(arg);   break;
         case '<': readSlot(arg);    break;
         case '=': showParams();     break;
-        case '@': dumpEeprom(); break;
+        case '@': dumpEeprom();     break;
+        case '+': arg = last_arg + arg; break;
+        case '-': arg = last_arg - arg; break;
+        case '*': arg = last_arg * arg; break;
+        case '/': arg = last_arg / arg; break;
+        case '&': arg = last_arg & arg; break;
+        case '|': arg = last_arg | arg; break;
+        case '^': arg = last_arg ^ arg; break;
         case '\r':
         case '\n':
             Serial.println();
