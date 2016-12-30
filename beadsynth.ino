@@ -18,7 +18,9 @@
 
 // pins to scan for sound triggers
 // grounding a pin plays the slot identified by its index
-uint8_t trigger_pins[] = {2,3,4,5, 6,7,8,10, 11,12};
+uint8_t trigger_pins[] = {2,3,4,5, 6,7,8,10, 11};
+
+#define MUTE_PIN 12
 
 Oscil <8192, AUDIO_RATE> aOscil(SIN8192_DATA);;
 EventDelay noteDelay;
@@ -143,6 +145,7 @@ void updateControl() {
     if (start_playing || repeat) {
         //Serial.println("starting a repeat");
         digitalWrite(13, 1);
+        digitalWrite(MUTE_PIN, 0);
         playing = 1;
         start_playing = 0;
         if (repeat) repeat--;
@@ -158,6 +161,7 @@ void updateControl() {
         playing = 0;
         gain = 0;
         digitalWrite(13, 0);
+        digitalWrite(MUTE_PIN, 1);
     }
 }
 
